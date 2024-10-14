@@ -1,0 +1,20 @@
+{% extends "base_dashboard.html" %}
+
+{% block content %}
+<p>タイトル:{{ title }}</p>
+
+<ul>
+    {% for usr in user_list %}
+    <li>{{ usr.email }}</li>
+    {% endfor %}
+</ul>
+
+<p>リクエストユーザー: {{ user }}</p>
+
+<form method="post" action="">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">送信</button>
+</form>
+
+{% endblock %}

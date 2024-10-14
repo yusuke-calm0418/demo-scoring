@@ -1,0 +1,64 @@
+{% extends "base_dashboard.html" %}
+{% load static %}
+
+{% block CSS %}
+{% endblock %}
+
+{% block content %}
+<h1 class="text-2xl font-bold mb-4">配信先設定</h1>
+
+<form method="post">
+    {% csrf_token %}
+    <div class="mb-4">
+        <label for="status" class="block text-gray-700 font-bold mb-2">ステータス</label>
+        <select id="status" name="status" class="w-full px-4 py-2 border rounded-md">
+            <!-- ステータスのオプションをここに表示 -->
+            {% for status in statuses %}
+            <option value="{{ status.id }}">{{ status.status_name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div class="mb-4">
+        <label for="tag" class="block text-gray-700 font-bold mb-2">タグ</label>
+        <select id="tag" name="tag" class="w-full px-4 py-2 border rounded-md">
+            <!-- タグのオプションをここに表示 -->
+            {% for tag in tags %}
+            <option value="{{ tag.id }}">{{ tag.name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div class="mb-4">
+        <label for="score" class="block text-gray-700 font-bold mb-2">スコア</label>
+        <input type="number" id="score" name="score" class="w-full px-4 py-2 border rounded-md">
+    </div>
+
+    <button type="submit" class="bg-primary text-white py-2 px-4 rounded">検索</button>
+</form>
+
+{% if results %}
+<h2 class="text-xl font-semibold mt-8">絞り込み結果</h2>
+<table class="min-w-full bg-white shadow-md rounded-lg">
+    <thead>
+        <tr>
+            <th class="py-2 px-4 border-b-2 text-gray-600 text-left">名前</th>
+            <th class="py-2 px-4 border-b-2 text-gray-600 text-left">ステータス</th>
+            <th class="py-2 px-4 border-b-2 text-gray-600 text-left">スコア</th>
+            <th class="py-2 px-4 border-b-2 text-gray-600 text-left">タグ</th>
+        </tr>
+    </thead>
+    <tbody>
+        <!-- 絞り込み結果をここに表示 -->
+        {% for user in results %}
+        <tr>
+            <td class="py-2 px-4 border-b">{{ user.display_name }}</td>
+            <td class="py-2 px-4 border-b">{{ user.status.status_name }}</td>
+            <td class="py-2 px-4 border-b">{{ user.total_score }}</td>
+            <td class="py-2 px-4 border-b">{{ user.tags.all|join:", " }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+{% endblock %}

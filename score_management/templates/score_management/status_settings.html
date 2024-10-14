@@ -1,0 +1,118 @@
+{% extends "base_dashboard.html" %}
+{% load static %}
+
+{% block CSS %}
+
+{% endblock %}
+{% block content %}
+<!-- メインコンテンツ -->
+<!-- ステータス設定フォーム -->
+<h1 class="text-3xl font-bold mb-8">ステータス設定</h1>
+<div class="bg-white p-6 rounded-lg shadow-lg mb-8 w-full">
+    <h2 class="text-xl font-semibold mb-4 text-textmain">ステータス設定</h2>
+    <form action="{% url 'status_settings' %}" method="post" class="flex w-full justify-between space-x-4">
+        {% csrf_token %}
+        <!-- ステータス名 -->
+        <div class="mb-4 w-5/12">
+            <label for="status_name" class="block text-gray-700 font-bold mb-4 text-sm text-center">ステータス名</label>
+            <input type="text" id="status_name" name="status_name" class="w-full px-3 py-2 border focus:outline-none focus:ring focus:border-blue-300" required>
+        </div>
+        <!-- カラー -->
+        <div class="mb-4 w-2/12">
+            <label for="color" class="block text-gray-700 font-bold mb-4 text-sm text-center">カラー</label>
+            <input type="color" id="color" name="color" class="w-full h-10 border focus:outline-none focus:ring focus:border-blue-300" required>
+        </div>
+        <!-- メモ -->
+        <div class="mb-4 w-1/3">
+            <label for="memo" class="block text-gray-700 font-bold mb-4 text-sm text-center">メモ</label>
+            <textarea id="memo" name="memo" class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring focus:border-blue-300" rows="3"></textarea>
+        </div>
+        <!-- 送信ボタン -->
+        <div class="flex justify-end items-center ml-4 w-1/12">
+            <button type="submit" class="bg-primary w-full text-white text-sm font-bold py-2 px-8 rounded-md hover:bg-opacity-80">保存</button>
+        </div>
+    </form>
+</div>
+
+<!-- 設定した内容の表示 -->
+<div class="bg-white p-6 rounded-lg shadow-lg w-full">
+    <h2 class="text-xl font-semibold mb-4 text-textmain">設定した内容</h2>
+    <table class="min-w-full bg-white">
+        <thead>
+            <tr>
+                <th class="py-2 px-6 border-b-2 text-textmain text-sm"></th>
+                <th class="py-2 px-6 border-b-2 text-textmain text-sm">ステータス名</th>
+                <th class="py-2 px-6 border-b-2 text-textmain text-sm">カラー</th>
+                <th class="py-2 px-6 border-b-2 text-textmain text-sm">メモ</th>
+                <th class="py-2 px-6 border-b-2 text-textmain text-sm"></th>
+            </tr>
+        </thead>
+        <tbody id="sortable">
+            {% for status in statuses %}
+            <tr class="draggable">
+                <td class="py-2 px-6 border-b text-sm text-center cursor-move">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16" />
+                    </svg>
+                </td>
+                <td class="py-2 px-6 border-b text-sm text-center">{{ status.status_name }}</td>
+                <td class="py-2 px-6 border-b text-sm text-center">
+                    <span class="inline-block text-white py-1 px-3 rounded-full text-sm" style="background-color: {{ status.color }};">&nbsp;</span>
+                </td>
+                <td class="py-2 px-6 border-b text-sm text-center">{{ status.memo }}</td>
+                <td class="py-2 px-4 border-b text-sm text-center">
+                    <button class="text-blue-500 hover:underline edit-button" data-status-id="{{ status.id }}" data-status-name="{{ status.status_name }}" data-color="{{ status.color }}" data-memo="{{ status.memo }}">
+                        編集
+                    </button>
+                    <button class="text-red-500 hover:underline ml-4 delete-button" data-status-id="{{ status.id }}">
+                        削除
+                    </button>
+                </td>
+            </tr>
+            <!-- 編集モーダル -->
+            <div id="editModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex justify-center items-center">
+                <div class="bg-white p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-textmain">ステータス設定の編集</h2>
+                    <form id="editForm" method="post">
+                        {% csrf_token %}
+                        <div class="mb-4">
+                            <label for="edit_status_name" class="block text-gray-700 font-bold mb-2">ステータス名</label>
+                            <input type="text" id="edit_status_name" name="status_name" class="w-full px-4 py-2 border rounded-md" required>
+                        </div>
+                        <div class="mb-4">
+                            <label for="edit_color" class="block text-gray-700 font-bold mb-2">カラー</label>
+                            <input type="color" id="edit_color" name="color" class="w-full h-10 border rounded-md" required>
+                        </div>
+                        <div class="mb-4">
+                            <label for="edit_memo" class="block text-gray-700 font-bold mb-2">メモ</label>
+                            <textarea id="edit_memo" name="memo" class="w-full px-4 py-2 border rounded-md"></textarea>
+                        </div>
+                        <div class="flex justify-end">
+                            <button type="button" id="cancelEdit" class="bg-gray-500 text-white py-2 px-4 rounded mr-2">キャンセル</button>
+                            <button type="submit" class="bg-primary text-white py-2 px-4 rounded">保存</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <!-- 削除確認モーダル -->
+            <div id="deleteModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex justify-center items-center">
+                <div class="bg-white p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-textmain">ステータス設定の削除</h2>
+                    <p class="mb-4">このステータス設定を削除しますか？</p>
+                    <form id="deleteForm" method="post" action="{% url 'delete_status_setting' status_id=status.id %}">
+                        {% csrf_token %}
+                        <div class="flex justify-end">
+                            <button type="button" id="cancelDelete" class="bg-gray-500 text-white py-2 px-4 rounded mr-2">キャンセル</button>
+                            <button type="submit" class="bg-red-500 text-white py-2 px-4 rounded">削除</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script src="{% static 'score_management/js/status_settings.js' %}"></script>
+
+{% endblock %}

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>新規登録画面</title>
+    {% load static %}
+    <link href="{% static 'css/output.css' %}" rel="stylesheet">
+</head>
+
+<body class="flex items-center justify-center min-h-screen bg-bg">
+    <div class="bg-white p-8 rounded-lg shadow-lg w-96">
+        <h2 class="text-2xl my-8 text-center font-nunito font-bold">新規会員登録</h2>
+        <form action="{% url 'user_management:register' %}" method="post">
+            {% csrf_token %}
+            {{ form.non_field_errors }}
+            <div class="mb-4">
+                {{ form.company_name.label_tag }}
+                {{ form.company_name }}
+                {{ form.company_name.errors }}
+            </div>
+            <div class="mb-4">
+                {{ form.email.label_tag }}
+                {{ form.email }}
+                {{ form.email.errors }}
+            </div>
+            <div class="mb-4">
+                {{ form.full_name.label_tag }}
+                {{ form.full_name }}
+                {{ form.full_name.errors }}
+            </div>
+            <div class="mb-4">
+                {{ form.kana_name.label_tag }}
+                {{ form.kana_name }}
+                {{ form.kana_name.errors }}
+            </div>
+            <div class="mb-4">
+                {{ form.phone_number.label_tag }}
+                {{ form.phone_number }}
+                {{ form.phone_number.errors }}
+            </div>
+            <div class="mb-4">
+                {{ form.postal_code.label_tag }}
+                {{ form.postal_code }}
+                {{ form.postal_code.errors }}
+            </div>
+            <div class="mb-4">
+                {{ form.address.label_tag }}
+                {{ form.address }}
+                {{ form.address.errors }}
+            </div>
+            <div class="mb-4">
+                {{ form.industry.label_tag }}
+                {{ form.industry }}
+                {{ form.industry.errors }}
+            </div>
+            <div class="mb-4">
+                <label for="{{ form.password1.id_for_label }}" class="block font-medium">パスワード</label>
+                <input type="password" name="password1" class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring focus:border-blue-300" id="{{ form.password1.id_for_label }}">
+                {{ form.password1.errors }}
+            </div>
+            <div class="mb-4">
+                <label for="{{ form.password2.id_for_label }}" class="block font-medium">パスワード確認</label>
+                <input type="password" name="password2" class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring focus:border-blue-300" id="{{ form.password2.id_for_label }}">
+                {{ form.password2.errors }}
+            </div>
+            <div class="flex items-center justify-between">
+                <button type="submit" class="bg-primary text-white font-bold py-2 px-16 rounded-lg hover:bg-opacity-80 mx-auto">登録</button>
+            </div>
+            <div class="text-center mt-4">
+                <a href="/login" class="text-sm text-primary py-2 px-4 rounded-lg hover:underline">ログインはこちら</a>
+            </div>
+        </form>
+    </div>
+    <script src="{% static 'js/main.js' %}"></script>
+</body>
+
+</html>

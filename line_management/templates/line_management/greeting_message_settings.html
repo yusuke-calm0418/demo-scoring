@@ -1,0 +1,23 @@
+{% extends "base_dashboard.html" %}
+{% load static %}
+
+{% block CSS %}
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto p-8">
+    <h1 class="text-2xl font-bold mb-4">挨拶メッセージ設定</h1>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.message_text }}
+        <button type="submit" class="bg-primary text-white py-2 px-4 rounded ml-8">保存</button>
+    </form>
+</div>
+
+{% if greeting_message %}
+<h2 class="text-xl font-semibold mt-8">現在の挨拶メッセージ</h2>
+<p class="mt-2 p-4 bg-gray-100 rounded-lg">{{ greeting_message.message_text }}</p>
+{% else %}
+<p class="mt-8 text-gray-600">現在設定されている挨拶メッセージはありません。</p>
+{% endif %}
+{% endblock %}

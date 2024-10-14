@@ -1,0 +1,62 @@
+<!-- LINE友達詳細ページ -->
+{% extends "base_dashboard.html" %}
+{% load static %}
+
+{% block CSS %}
+
+{% endblock %}
+{% block content %}
+
+<!-- メインコンテンツ -->
+<h1 class="text-3xl font-bold mb-8">LINE友達情報</h1>
+
+<!-- LINE友達のアクション履歴 -->
+<div class="flex mb-8">
+    <div class="w-3/5 bg-white p-6 rounded-lg shadow-lg">
+        <h2 class="text-xl font-semibold mb-4 text-textmain">LINE友達 {{ line_friend.display_name }} のアクション履歴</h2>
+        <table class="min-w-full bg-white">
+            <thead>
+                <tr>
+                    <th class="py-2 px-6 border-b-2 text-textmain text-sm">アクション日</th>
+                    <th class="py-2 px-6 border-b-2 text-textmain text-sm">アクションタイプ</th>
+                    <th class="py-2 px-6 border-b-2 text-textmain text-sm">スコア</th>
+                    <th class="py-2 px-6 border-b-2 text-textmain text-sm">メモ</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for action in line_friend.actions.all %}
+                <tr>
+                    <td class="py-2 px-6 border-b text-sm text-center">{{ action.date }}</td>
+                    <td class="py-2 px-6 border-b text-sm text-center">{{ action.action_type }}</td>
+                    <td class="py-2 px-6 border-b text-sm text-center">{{ action.score }}</td>
+                    <td class="py-2 px-6 border-b text-sm text-center">{{ action.memo }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" class="py-2 px-6 text-sm text-center">アクション履歴がありません</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- LINE友達の詳細 -->
+    <div class="w-2/5 bg-second p-6 rounded-lg shadow-lg ml-8">
+        <h2 class="text-xl font-semibold mb-4 text-textmain">LINE友達の詳細</h2>
+        <div class="space-y-4">
+            <div class="text-center">
+                <img src="{{ line_friend.picture_url }}" alt="アカウント画像" class="w-32 h-32 rounded-full mx-auto mb-4">
+                <p class="text-textmain">{{ line_friend.display_name }}</p>
+            </div>
+            <div class="flex justify-center items-center rounded-lg p-4 mb-4">
+                <div class="text-center border-2 border-primary border-r-0 rounded-tl-lg rounded-bl-lg bg-white px-4 py-2">
+                    <h3 class="text-lg font-semibold text-textmain">Total Score</h3>
+                    <p class="text-2xl font-bold text-textmain">{{ line_friend.total_score }}</p>
+                </div>
+                <div class="text-center border-2 border-primary rounded-tr-lg rounded-br-lg bg-white px-4 py-2">
+                    <h3 class="text-lg font-semibold text-textmain">Final Action</h3>
+                    <p class="py-1 text-textmain">{{ line_friend.final_action_date }}</p>
+                </div>
+            </div>
+        </div>
+        {% endblock %}

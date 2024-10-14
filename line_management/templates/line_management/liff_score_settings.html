@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LIFF App</title>
+    <!-- LIFF SDKの読み込み -->
+    <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+</head>
+
+<body>
+    <h1>LIFF App Example</h1>
+    <p>お待ちください...</p>
+
+    <script type="text/javascript">
+        liff.init({
+            liffId: "2006046408-9V1PxwDl", 
+        })
+            .then(() => {
+                if (!liff.isLoggedIn()) {
+                    liff.login(); 
+                } else {
+                    const accessToken = liff.getAccessToken();
+                    console.log('Access Token:', accessToken); 
+
+                    // ここでサーバーにアクセストークンを送信する処理を追加します
+                    fetch('{% url "line_management:verify_token" link_score.pk %}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                            'X-CSRFToken': '{{ csrf_token }}',
+                        },
+                        body: `access_token=${accessToken}`
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            console.log('Success:', data);
+                            // スコアの加算が成功したらリダイレクト
+                            const linkUrl = data.link_url;
+                            console.log(linkUrl);
+                            window.location.href = linkUrl;
+                        })
+                        .catch(error => console.error('Error:', error));
+                }
+            })
+            .catch((err) => {
+                console.error('LIFF Initialization failed', err);
+            });
+    </script>
+
+</body>
+
+</html>

@@ -1,0 +1,20 @@
+{% extends "base_dashboard.html" %}
+
+{% block content %}
+<h1 class="text-3xl font-bold mb-8">QRコード表示</h1>
+
+<!-- QRコード表示 -->
+<div class="bg-white p-6 rounded-lg shadow-md text-center">
+    <img src="{{ qr_code_url }}" alt="QRコード" class="mx-auto mb-4 w-48 h-48">
+    <a href="{{ qr_code_url }}" download="qr_code.png" class="bg-primary text-white px-4 py-2 rounded hover:bg-opacity-80">
+        ダウンロード
+    </a>
+</div>
+
+<!-- 戻るボタン -->
+<div class="mt-8 text-center">
+    <a href="{% url 'line_management:referral_source' %}" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-opacity-80">
+        流入経路一覧へ戻る
+    </a>
+</div>
+{% endblock %}

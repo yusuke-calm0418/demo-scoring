@@ -1,0 +1,14 @@
+<!-- distribution_settings.html -->
+{% extends "base_dashboard.html" %}
+{% load static %}
+
+{% block content %}
+<h1 class="text-3xl font-bold mb-8">配信設定</h1>
+<div class="flex flex-col space-y-4">
+    <ul>
+        <li><a href="{% url 'line_management:greeting_message_settings' %}">挨拶メッセージ</a></li>
+        <li><a href="{% url 'line_management:segment_distribution_list' %}">セグメント配信</a></li> <!-- ここを追加 -->
+        <li><a href="#">ステップ配信</a></li>
+    </ul>
+</div>
+{% endblock %}

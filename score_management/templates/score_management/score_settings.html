@@ -1,0 +1,193 @@
+<!-- score_management/score_settings.html -->
+{% extends "base_dashboard.html" %}
+{% load static %}
+{% load custom_tags %}
+
+{% block CSS %}
+
+{% endblock %}
+{% block content %}
+<!-- メインコンテンツ -->
+<!-- スコア設定フォーム -->
+<h1 class="text-3xl font-bold mb-8">スコア設定</h1>
+<div class="bg-white p-6 rounded-lg shadow-lg mb-8 w-full">
+    <h2 class="text-xl font-semibold mb-4 text-textmain">スコア設定</h2>
+    <!-- フォームの上部にエラーメッセージを表示 -->
+    {% if form.non_field_errors %}
+    <div class="error text-red-500">
+        {{ form.non_field_errors }}
+    </div>
+    {% endif %}
+    <form action="{% url 'score_management:score_settings' %}" method="post" class="flex w-full justify-between space-x-4">
+        {% csrf_token %}
+        <!-- アクションの種類 -->
+        <div class="mb-4 w-2/12">
+            <label for="action_type" class="block text-gray-700 font-bold mb-4 text-sm text-center">アクションの種類</label>
+            <select id="action_type" name="action_type" class="w-full px-4 py-2 border focus:outline-none focus:ring focus:border-blue-300" required>
+                <option value="link">リンク</option>
+                <option value="speech">発話</option>
+            </select>
+        </div>
+        <!-- トリガー -->
+        <div class="mb-4 w-5/12">
+            <label for="trigger" class="block text-gray-700 font-bold mb-4 text-sm text-center">アクションのトリガー</label>
+            <input type="text" id="trigger" name="trigger" class="w-full px-3 py-2 border focus:outline-none focus:ring focus:border-blue-300" required>
+        </div>
+        <!-- スコア -->
+        <div class="mb-4 w-1/12">
+            <label for="score" class="block text-gray-700 font-bold mb-4 text-sm text-center">スコア</label>
+            <input type="number" id="score" name="score" class="w-full px-3 py-2 border focus:outline-none focus:ring focus:border-blue-300" required>
+        </div>
+        <!-- タグ名 -->
+        <div class="flex-col w-1/4">
+            <div class="mb-2 w-full">
+                <label for="tag_name" class="block text-gray-700 font-bold mb-4 text-sm text-center">アクションタグ</label>
+                <input type="text" id="tag_name" name="tag_name" class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring focus:border-blue-300">
+            </div>
+            <!-- タグカラー -->
+            <div class="mb-4 w-full">
+                <label for="tag_color" class="block text-gray-700 font-bold mb-2 text-sm text-center">タグカラー</label>
+                <input type="color" id="tag_color" name="tag_color" class="w-full h-10 border focus:outline-none focus:ring focus:border-blue-300">
+            </div>
+        </div>
+        <!-- メモ -->
+        <div class="mb-4 w-1/3">
+            <label for="memo" class="block text-gray-700 font-bold mb-4 text-sm text-center">アクションメモ</label>
+            <textarea id="memo" name="memo" class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring focus:border-blue-300" rows="3"></textarea>
+        </div>
+        <!-- 送信ボタン -->
+        <div class="flex justify-end items-center ml-4 w-1/12">
+            <button type="submit" class="bg-primary w-full text-white text-sm font-bold py-2 px-8 rounded-md hover:bg-opacity-80">保存</button>
+        </div>
+    </form>
+</div>
+
+<!-- 設定した内容の表示 -->
+<div class="bg-white p-6 rounded-lg shadow-lg w-full">
+    <h2 class="text-xl font-semibold mb-4 text-textmain">設定した内容</h2>
+    <table class="min-w-full bg-white" id="sortable-table">
+        <thead>
+            <tr>
+                <th class="py-2 px-4 border-b-2 text-textmain text-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline-block" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16" />
+                    </svg>
+                </th>
+                <th class="py-2 px-2 border-b-2 text-textmain text-sm">アクションの種類</th>
+                <th class="py-2 px-2 border-b-2 text-textmain text-sm">アクションのトリガー</th>
+                <th class="py-2 px-2 border-b-2 text-textmain text-sm">アクションタグ</th>
+
+                <th class="py-2 px-2 border-b-2 text-textmain text-sm">スコア</th>
+                <th class="py-2 px-2 border-b-2 text-textmain text-sm">メモ</th>
+                <th class="py-2 px-2 border-b-2 text-textmain text-sm">操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for score in scores %}
+            <tr>
+                <td class="py-2 px-4 border-b text-sm text-center cursor-move">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline-block" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16" />
+                    </svg>
+                </td>
+                <!-- アクションの種類 -->
+                <td class="py-2 px-2 border-b text-sm text-center">
+                    {% if score.action_type == 'link' %}
+                    <span class="inline-block bg-blue-100 text-blue-800 py-1 px-2 rounded-full text-sm">リンク</span>
+                    {% else %}
+                    <span class="inline-block bg-green-100 text-green-800 py-1 px-2 rounded-full text-sm">発話</span>
+                    {% endif %}
+                </td>
+                <!-- トリガー -->
+                <td class="py-2 px-2 border-b text-sm text-center">
+                    <!-- トリガーリンクの表示 -->
+                    {% if score.action_type == 'link' %}
+                    <p>元のリンク: <a href="{{ score.trigger }}" class="text-blue-500 hover:underline">{{ score.trigger }}</a></p>
+                    <p>トラッキングリンク: <a href="{{ score.tracking_link }}" class="text-blue-500 hover:underline">{{ score.tracking_link }}</a></p>
+                    {% else %}
+                    {{ score.trigger }}
+                    {% endif %}
+                </td>
+                <!-- タグ -->
+                <td class="py-2 px-2 border-b text-sm text-center">
+                    <span class="inline-block py-1 px-3 rounded-full text-sm text-white" style="background-color: {{ score.tag.color}}">
+                        {{ score.tag.name }}
+                    </span>
+                </td>
+                <td class="py-2 px-2 border-b text-sm text-center">{{ score.score }}</td>
+                <td class="py-2 px-2 border-b text-sm text-center">{{ score.memo }}</td>
+                <td class="py-2 px-2 border-b text-sm text-center">
+                    <button class="text-blue-500 hover:underline edit-button" data-score-id="{{ score.id }}" data-action-type="{{ score.action_type }}" data-trigger="{{ score.trigger }}" data-score="{{ score.score }}" data-tag-name="{{ score.tag.name }}" data-tag-color="{{ score.tag.color }}" data-memo="{{ score.memo }}">
+                        編集
+                    </button>
+                    <button class="text-red-500 hover:underline ml-4 delete-button" data-score-id="{{ score.id }}">
+                        削除
+                    </button>
+                </td>
+                <!-- 編集モーダル -->
+                <div id="editModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex justify-center items-center">
+                    <div class="bg-white p-6 rounded-lg shadow-lg">
+                        <h2 class="text-xl font-semibold mb-4 text-textmain">スコア設定の編集</h2>
+                        <form id="editForm" method="post">
+                            {% csrf_token %}
+                            <div class="mb-4">
+                                <label for="edit_action_type" class="block text-gray-700 font-bold mb-2">アクションの種類</label>
+                                <select id="edit_action_type" name="action_type" class="w-full px-4 py-2 border rounded-md" required>
+                                    <option value="link">リンク</option>
+                                    <option value="speech">発話</option>
+                                </select>
+                            </div>
+                            <div class="mb-4">
+                                <label for="edit_trigger" class="block text-gray-700 font-bold mb-2">アクションのトリガー</label>
+                                <input type="text" id="edit_trigger" name="trigger" class="w-full px-4 py-2 border rounded-md" required>
+                            </div>
+                            <div class="mb-4">
+                                <label for="edit_score" class="block text-gray-700 font-bold mb-2">スコア</label>
+                                <input type="number" id="edit_score" name="score" class="w-full px-4 py-2 border rounded-md" required>
+                            </div>
+                            <div class="mb-4">
+                                <label for="edit_tag_name" class="block text-gray-700 font-bold mb-2">アクションタグ</label>
+                                <input type="text" id="edit_tag_name" name="tag_name" class="w-full px-4 py-2 border rounded-md">
+                            </div>
+                            <div class="mb-4">
+                                <label for="edit_tag_color" class="block text-gray-700 font-bold mb-2">タグカラー</label>
+                                <input type="color" id="edit_tag_color" name="tag_color" class="w-full h-10 border rounded-md">
+                            </div>
+                            <div class="mb-4">
+                                <label for="edit_memo" class="block text-gray-700 font-bold mb-2">アクションメモ</label>
+                                <textarea id="edit_memo" name="memo" class="w-full px-4 py-2 border rounded-md"></textarea>
+                            </div>
+                            <div class="flex justify-end">
+                                <button type="button" id="cancelEdit" class="bg-gray-500 text-white py-2 px-4 rounded mr-2">キャンセル</button>
+                                <button type="submit" class="bg-primary text-white py-2 px-4 rounded">保存</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- 削除確認モーダル -->
+                <div id="deleteModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex justify-center items-center">
+                    <div class="bg-white p-6 rounded-lg shadow-lg">
+                        <h2 class="text-xl font-semibold mb-4 text-textmain">スコア設定の削除</h2>
+                        <p class="mb-4">このスコア設定を削除しますか？</p>
+                        <form id="deleteForm" method="post" action="{% url 'score_management:delete_score_setting' score_id=score.id %}">
+                            {% csrf_token %}
+                            <div class="flex justify-end">
+                                <button type="button" id="cancelDelete" class="bg-gray-500 text-white py-2 px-4 rounded mr-2">キャンセル</button>
+                                <button type="submit" class="bg-red-500 text-white py-2 px-4 rounded">削除</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+</div>
+
+</div>
+
+<script src="{% static 'score_management/js/score_settings.js' %}"></script>
+
+{% endblock %}
