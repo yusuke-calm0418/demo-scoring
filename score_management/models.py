@@ -3,15 +3,14 @@ from django.db import models
 from django.conf import settings
 from django.contrib.auth.models import User
 from line_management.models import LineFriend, Tag
-from user_management.models import Company
 from django.utils.crypto import get_random_string
 import random, string
 from urllib.parse import urlencode
+from django.apps import apps
 
 
 # スコア設定テーブル
 class ScoreSetting(models.Model):
-    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='score_settings')
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     ACTION_TYPE_CHOICES = [
         ('link', 'リンク'),
@@ -21,14 +20,14 @@ class ScoreSetting(models.Model):
     trigger = models.CharField(max_length=100)
     score = models.IntegerField()
     memo = models.TextField(blank=True, null=True)
-    tag = models.ForeignKey(Tag, on_delete=models.SET_NULL, null=True, blank=True)
+    tag = models.ForeignKey('line_management.Tag', on_delete=models.SET_NULL, null=True, blank=True)
     tracking_link = models.URLField(blank=True, null=True)
 
     def __str__(self):
         return f"{self.get_action_type_display()} - {self.trigger} - {self.score}"
 
     def generate_tracking_link(self):
-        base_url = "https://3ec4-118-238-234-205.ngrok-free.app/line/liff/"
+        base_url = "https://03f9-118-238-234-205.ngrok-free.app/line/liff/"
         return f"{base_url}{self.pk}"
 
     def save(self, *args, **kwargs):
@@ -41,17 +40,6 @@ class ScoreSetting(models.Model):
 
     # 再度保存してトラッキングリンクを保存
         super().save(*args, **kwargs)
-
-
-# ステータス設定テーブル
-class StatusSetting(models.Model):
-    status_name = models.CharField(max_length=100)
-    color = models.CharField(max_length=7)
-    memo = models.TextField(blank=True, null=True)
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-
-    def __str__(self):
-        return self.status_name
 
 # リンクテーブル
 class Link(models.Model):

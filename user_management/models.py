@@ -1,6 +1,7 @@
 # user_management/models.py
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
+from django.conf import settings
 
 class CustomUserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
@@ -23,20 +24,8 @@ class CustomUserManager(BaseUserManager):
 
         return self.create_user(email, password, **extra_fields)
 
-
-# カンパニー
-class Company(models.Model):
-    name = models.CharField(max_length=255)
-    address = models.CharField(max_length=255, null=True, blank=True)
-    industry = models.CharField(max_length=255, null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return self.name
-
 # ユーザーモデル
 class CustomUser(AbstractBaseUser, PermissionsMixin):
-    company = models.ForeignKey('user_management.Company', on_delete=models.CASCADE, null=True, blank=True)
     company_name = models.CharField(max_length=255)
     name = models.CharField(max_length=255)
     kana_name = models.CharField(max_length=255)

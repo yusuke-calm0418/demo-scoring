@@ -6,18 +6,23 @@ from .forms import ScoreSettingForm
 from django.utils.decorators import method_decorator
 from django.views import View
 from django.http import HttpResponseBadRequest, JsonResponse
-from line_management.models import LineFriend, UserAction
+# from line_management.models import LineFriend, UserAction
 from urllib.parse import unquote
 from django.utils.http import urlencode
 import logging 
 from django.db.models import Count, Max, Sum
 from django.db.models.functions import Coalesce
-from django.db.models import Value
+from django.db.models import Value 
+
+
 
 logger = logging.getLogger(__name__)
 
 @login_required
 def dashboard_view(request):
+    from line_management.models import UserAction, LineFriend  # 関数内インポート
+    from .forms import ScoreSettingForm  # 関数内インポート
+    
     if request.method == 'POST':
         form = ScoreSettingForm(request.POST)
         if form.is_valid():
@@ -68,6 +73,9 @@ def generate_tracking_link(original_url, line_user_id):
 class ScoreSettingsView(View):
     @method_decorator(login_required)
     def get(self, request):
+        from .forms import ScoreSettingForm  # 関数内インポート
+        from .models import ScoreSetting  # 関数内インポート
+        
         form = ScoreSettingForm()
         scores = ScoreSetting.objects.filter(user=request.user)
         tags = Tag.objects.all()  #タグを取得

@@ -8,7 +8,7 @@ class LineSettingsAdmin(admin.ModelAdmin):
 
 @admin.register(LineFriend)
 class LineFriendAdmin(admin.ModelAdmin):
-    list_display = ('line_user_id', 'display_name', 'total_score', 'picture_url', 'short_memo', 'detail_memo', 'display_tags')  # 修正: 'tags'をカスタムメソッドに変更
+    list_display = ('line_user_id', 'display_name', 'total_score', 'picture_url', 'short_memo', 'detail_memo', 'display_tags')  
     search_fields = ('line_user_id', 'display_name', 'status_message')
 
     def total_score(self, obj):
@@ -16,11 +16,11 @@ class LineFriendAdmin(admin.ModelAdmin):
 
     total_score.short_description = 'Total Score'
 
-    # カスタムメソッドでタグを表示
-    def display_tags(self, obj):
-        return ", ".join([tag.name for tag in obj.tags.all()])  # タグの名前をカンマで区切って表示
 
-    display_tags.short_description = 'Tags'  # 管理画面で表示される列の名前
+    def display_tags(self, obj):
+        return ", ".join([tag.name for tag in obj.tags.all()])  
+
+    display_tags.short_description = 'Tags' 
 
 admin.site.register(LineSettings, LineSettingsAdmin)
 

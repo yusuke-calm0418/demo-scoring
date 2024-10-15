@@ -4,7 +4,6 @@
 {% block content %}
 <h1 class="text-3xl font-bold mb-8">設定</h1>
 
-
 <div class="bg-white p-6 rounded-lg shadow-lg mt-4">
     <h2 class="text-2xl font-bold mb-8">基本情報</h2>
     <h3 class="font-bold">アカウント名</h3>
@@ -13,23 +12,49 @@
 
 <div class="bg-white p-6 rounded-lg shadow-lg mt-4">
     <h2 class="text-2xl font-bold mb-8">LINE設定</h2>
+
+    {% if form.errors %}
+    <div class="bg-red-100 text-red-700 p-4 rounded mb-4">
+        <strong>エラー:</strong> 入力内容に問題があります。以下の項目を修正してください。
+        <ul class="list-disc list-inside mt-2">
+            {% for field in form %}
+            {% if field.errors %}
+            <li>{{ field.label }}: {{ field.errors|join:", " }}</li>
+            {% endif %}
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
     <form method="post">
         {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit" class="bg-primary text-white px-4 py-2 rounded-md mt-8">保存</button>
+        <div class="grid grid-cols-1 gap-4">
+            {{ form.as_p }}
+        </div>
+        <button type="submit" class="bg-primary text-white px-6 py-3 rounded-md mt-8 hover:bg-primary-dark transition">
+            保存
+        </button>
     </form>
 </div>
+
 
 <div class="bg-white p-6 rounded-lg shadow-lg mt-4">
     <h2 class="text-2xl font-bold mb-8">LIFF設定</h2>
+
     <form method="post">
         {% csrf_token %}
-        <p>WebhookURL:</p>
-        <button type="submit" class="bg-primary text-white px-4 py-2 rounded-md mt-8">保存</button>
+        <div class="mb-4">
+            <label class="block font-bold mb-2" for="webhook_url">Webhook URL:</label>
+            <input type="text" id="webhook_url" name="webhook_url" class="w-full border border-gray-300 p-2 rounded" placeholder="https://your-ngrok-url.ngrok-free.app/callback/">
+        </div>
+        <button type="submit" class="bg-primary text-white px-4 py-2 rounded-md mt-8">
+            保存
+        </button>
     </form>
 </div>
 
-<p class="font-red mt-8"><u><a href="">アカウントを解約</a></u></p>
+<p class="text-red-500 mt-8">
+    <u><a href="">アカウントを解約</a></u>
+</p>
 
 {% endblock %}
-

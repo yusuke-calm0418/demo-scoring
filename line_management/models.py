@@ -5,14 +5,18 @@ from django.conf import settings
 
 # LINE IDを登録するためのモデル
 class LineSettings(models.Model):
-    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL, 
+        on_delete=models.CASCADE, 
+        related_name='line_settings'
+    )
     line_channel_id = models.CharField(max_length=255)
     line_channel_secret = models.CharField(max_length=255)
     line_access_token = models.CharField(max_length=255)
 
     def __str__(self):
         return f"LINE Settings for {self.user.email}"
-    
+        
 # タグテーブル
 class Tag(models.Model):
     name = models.CharField(max_length=100)
@@ -25,9 +29,9 @@ class Tag(models.Model):
     
 # 流入経路
 class Referral(models.Model):
-    name = models.CharField(max_length=255)  # 流入経路の名前
-    url = models.URLField()  # 流入経路のURL
-    created_at = models.DateTimeField(auto_now_add=True)  # 作成日時
+    name = models.CharField(max_length=255)  
+    url = models.URLField()  
+    created_at = models.DateTimeField(auto_now_add=True)  
 
     def __str__(self):
         return self.name
@@ -36,15 +40,20 @@ class Referral(models.Model):
 class LineFriend(models.Model):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL, 
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
+        null=True, blank=True
     )
-    line_settings = models.ForeignKey(LineSettings, on_delete=models.CASCADE) 
+    line_settings = models.ForeignKey(
+        LineSettings, 
+        on_delete=models.CASCADE, 
+        related_name='line_friends'
+    )
     line_user_id = models.CharField(max_length=255, unique=True)
     display_name = models.CharField(max_length=255)
     picture_url = models.URLField(null=True, blank=True)
     short_memo = models.CharField(max_length=50, null=True, blank=True) 
-    detail_memo = models.TextField(null=True, blank=True)  # 詳細メモとしてmemoをリネーム
-    tags = models.ManyToManyField(Tag, blank=True)  # タグを持つ多対多のフィールド
+    detail_memo = models.TextField(null=True, blank=True) 
+    tags = models.ManyToManyField(Tag, blank=True)  
 
     def __str__(self):
         return self.display_name

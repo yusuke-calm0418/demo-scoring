@@ -18,13 +18,12 @@ Including another URLconf
 # myproject/urls.py
 from django.contrib import admin
 from django.urls import path, include
-from line_management import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('user_management.urls')),  # user_managementアプリのルートURL
-    path('callback/', views.callback, name='callback'),  # callbackビューの直接呼び出し
     path('score/', include('score_management.urls')),  # score_managementアプリのURL
-    path('line/', include('line_management.urls')),  # line_managementアプリの他のURLパターン
+    path('line/', include('line_management.urls')),  # line_managementアプリのURL
 ]
+
 

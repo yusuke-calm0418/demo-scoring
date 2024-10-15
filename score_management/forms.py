@@ -1,6 +1,6 @@
 # score_management/forms.py
 from django import forms
-from .models import ScoreSetting, StatusSetting, Tag
+from .models import ScoreSetting, Tag
 from django.core.exceptions import ValidationError
 
 class ScoreSettingForm(forms.ModelForm):
@@ -23,8 +23,3 @@ class ScoreSettingForm(forms.ModelForm):
             if Tag.objects.filter(name=tag_name).exists():
                 raise ValidationError(f' "{tag_name}" は既に存在します。')
         return cleaned_data    
-
-class StatusSettingForm(forms.ModelForm):
-    class Meta:
-        model = StatusSetting
-        fields = ['status_name', 'color', 'memo']

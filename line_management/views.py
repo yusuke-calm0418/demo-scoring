@@ -13,7 +13,6 @@ from linebot.models import MessageEvent, TextMessage, TextSendMessage, FollowEve
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from .models import LineFriend, UserAction, LineSettings, Referral
-from score_management.models import ScoreSetting, StatusSetting, Tag
 from .forms import LineSettingsForm, LineFriendForm
 import json
 from django.http import JsonResponse
@@ -27,23 +26,65 @@ from django.db.models.functions import Coalesce
 from django.db.models import Q
 from django.utils import timezone
 from datetime import datetime
+from django.core.exceptions import ObjectDoesNotExist 
+
 
 # ロギングの設定
 logger = logging.getLogger(__name__)
 
-# LINE設定を取得する関数
-def get_line_settings():
+def get_line_settings(request):
+    from .models import LineSettings  # 関数内インポート
+    from .forms import LineSettingsForm  # 関数内インポート
+    import logging
+
+    # ロギング設定
+    logger = logging.getLogger(__name__)
+
+    # 設定を取得し、ログに出力
+    settings = LineSettings.objects.filter(user=request.user).first()
+    if settings:
+        logger.info(f"LINE Settings found: Channel ID - {settings.line_channel_id}, User - {settings.user}")
+    else:
+        logger.warning("LINE Settings not found for the user.")
+
+    # POSTリクエスト処理
+    if request.method == 'POST':
+        form = LineSettingsForm(request.POST, instance=settings)
+        if form.is_valid():
+            line_settings = form.save(commit=False)  # 一時保存
+            line_settings.user = request.user  # 現在のユーザーをセット
+            line_settings.save()  # データベースに保存
+            return redirect('line_management:line_settings')
+    else:
+        form = LineSettingsForm(instance=settings)  # フォームを初期化
+
+    return render(request, 'line_management/line_settings.html', {'form': form, 'settings': settings})
+
+
+
+# LINE設定の初期化を行う関数
+def initialize_line_bot_api():
+    from .models import LineSettings  # 関数内インポート
+    from linebot import LineBotApi, WebhookHandler  # 関数内インポート
+
     settings = LineSettings.objects.first()
     if not settings:
-        raise ValueError("LINE settings not found. Please configure your LINE settings.")
-    return settings
+        logger.warning("LINE settings not found.")
+        return None, None  # Noneを返してエラー回避
 
-# LINE設定を取得
-line_settings = get_line_settings()
-line_bot_api = LineBotApi(line_settings.line_access_token)
-handler = WebhookHandler(line_settings.line_channel_secret)
+    line_bot_api = LineBotApi(settings.line_access_token)
+    handler = WebhookHandler(settings.line_channel_secret)
+    return line_bot_api, handler
 
+# 初期化を行い、グローバル変数に代入
+line_bot_api, handler = initialize_line_bot_api()
+
+@handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
+    # ScoreSettingを関数内でインポート
+    from score_management.models import ScoreSetting
+
+    
     text = event.message.text
     line_user_id = event.source.user_id
     reply_token = event.reply_token
@@ -52,12 +93,18 @@ def handle_message(event):
         profile = line_bot_api.get_profile(line_user_id)
         display_name = profile.display_name
         picture_url = profile.picture_url
+        
+        # LineSettingsを取得
+        line_settings = LineSettings.objects.first()  # 必要に応じて取得方法を変更
+        if not line_settings:
+            raise ValueError("LINE settings not found. Please configure your LINE settings.")
 
         line_friend, created = LineFriend.objects.get_or_create(
             line_user_id=line_user_id,
             defaults={
                 'display_name': display_name,
                 'picture_url': picture_url,
+                'line_settings': line_settings
             }
         )
 
@@ -119,7 +166,6 @@ def user_info_view(request):
         'actions': actions,
     })
     
-
 def get_user_details(request, user_id):
     try:
         line_friend = LineFriend.objects.get(id=user_id)
@@ -200,54 +246,34 @@ def line_friends_list(request):
 
 @csrf_exempt
 def callback(request):
-    # get X-Line-Signature header value
-    signature = request.META['HTTP_X_LINE_SIGNATURE']
-
-    # get request body as text
+    signature = request.META.get('HTTP_X_LINE_SIGNATURE', '')
     body = request.body.decode('utf-8')
-    logger.debug("Request body: %s", body)
-    
-    # リクエストbodyをデコードして取得
-    request_json = json.loads(body)
-    if not request_json["events"]:
-        return HttpResponse('OK')
-    
-    events = request_json['events']
-    for event in events:
-        event_type = event['type']
-        logger.debug(f"Handling event type: {event_type}")
-        
-        # メッセージイベントの場合
-        if event_type == 'message':
-            messagetype = event['message']['type']
-            if messagetype == 'text':
-                handle_message(MessageEvent.new_from_json_dict(event))
-            elif messagetype == 'sticker':
-                handle_sticker(MessageEvent.new_from_json_dict(event))
-            elif messagetype == 'image':
-                handle_image(MessageEvent.new_from_json_dict(event))
-        # フォローイベントの場合
-        elif event_type == 'follow':
-            line_user_id = event['source']['userId']
-            line_friend = get_object_or_404(LineFriend, line_user_id=line_user_id)
-            line_friend.is_blocked = False
-            line_friend.save()
-            handle_follow(FollowEvent.new_from_json_dict(event))
-    
-    # handle webhook body
+
+    print(f"Signature: {signature}")  # 確認用
+    print(f"Request Body: {body}")  # 確認用
+
+    if not signature:
+        print("Signature is missing!")
+        return HttpResponseForbidden("Missing signature")
+
     try:
         handler.handle(body, signature)
+        print("Handler executed successfully")
     except InvalidSignatureError:
-        logger.error("Invalid signature. Check your channel access token/channel secret.")
-        return HttpResponse(status=400)
+        print("Invalid signature")
+        return HttpResponseForbidden()
     except Exception as e:
-        logger.error("Error: %s", str(e))
+        print(f"Error: {str(e)}")
         return HttpResponseBadRequest()
+
     return HttpResponse('OK')
+
 
 
 @login_required
 def line_friend_detail_view(request, line_friend_id):
+    from .models import LineFriend  # 関数内インポート
+    
     line_friend = get_object_or_404(LineFriend, id=line_friend_id)
     return render(request, 'line_management/line_friend_detail.html', {'line_friend': line_friend})
 
@@ -345,6 +371,9 @@ def liff_access_view(request):
     return render(request, 'line_management/liff_template.html')
 
 def link_redirect_view(request, pk):
+    # ScoreSettingを関数内でインポート
+    from score_management.models import ScoreSetting
+    
     link_score = get_object_or_404(ScoreSetting, pk=pk)
     context = {
         'link_score':link_score,
@@ -353,6 +382,9 @@ def link_redirect_view(request, pk):
 
 # リンククリックの処理（LIFF）
 def verify_token(request, pk):
+    # ScoreSettingを関数内でインポート
+    from score_management.models import ScoreSetting
+    
     if request.method == 'POST':
         access_token = request.POST.get('access_token')
         headers = {'Authorization': f'Bearer {access_token}'}
