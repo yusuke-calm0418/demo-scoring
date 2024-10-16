@@ -5,7 +5,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LIFF App</title>
-    <!-- LIFF SDKの読み込み -->
     <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 </head>
 
@@ -14,26 +13,48 @@
     <p>お待ちください...</p>
 
     <script type="text/javascript">
-        liff.init({
-            liffId: "2006046408-9V1PxwDl", // LIFF IDをここに挿入
-        })
-            .then(() => {
-                if (!liff.isLoggedIn()) {
-                    liff.login();  // ユーザーがログインしていない場合、ログインを促します
-                } else {
-                    const accessToken = liff.getAccessToken();
-                    if (accessToken) {
-                        console.log('Access Token:', accessToken); // アクセストークンを確認するためのログ出力
-                    } else {
-                        console.error('アクセストークンが取得できませんでした。');
-                    }
-                }
-            })
-            .catch((err) => {
-                console.error('LIFF Initialization failed', err);
-            });
-    </script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const liffId = "{{ liff_id }}";  // テンプレートから動的に LIFF ID を取得
 
+            liff.init({ liffId })
+                .then(() => {
+                    if (!liff.isLoggedIn()) {
+                        liff.login();
+                    } else {
+                        const accessToken = liff.getAccessToken();
+                        if (accessToken) {
+                            console.log('Access Token:', accessToken);
+
+                            fetch("{% url 'line_management:verify_token' link_score.pk %}", {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/x-www-form-urlencoded',
+                                    'X-CSRFToken': '{{ csrf_token }}',
+                                },
+                                body: `access_token=${encodeURIComponent(accessToken)}`
+                            })
+                                .then(response => response.json())
+                                .then(data => {
+                                    if (data.link_url) {
+                                        window.location.href = data.link_url;
+                                    } else {
+                                        console.warn('リンクURLが見つかりません');
+                                    }
+                                })
+                                .catch(error => {
+                                    console.error('Error:', error);
+                                    alert('アクセストークンの検証に失敗しました。');
+                                });
+                        } else {
+                            console.error('アクセストークンが取得できませんでした。');
+                        }
+                    }
+                })
+                .catch(err => {
+                    console.error('LIFFの初期化に失敗しました:', err);
+                });
+        });
+    </script>
 </body>
 
 </html>

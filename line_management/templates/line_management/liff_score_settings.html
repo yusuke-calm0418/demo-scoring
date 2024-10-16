@@ -1,3 +1,5 @@
+<!-- line_management/templates/line_management/liff_score_settings.html -->
+
 <!DOCTYPE html>
 <html lang="ja">
 
@@ -15,7 +17,7 @@
 
     <script type="text/javascript">
         liff.init({
-            liffId: "2006046408-9V1PxwDl", 
+            liffId: "{{ liff_id }}", 
         })
             .then(() => {
                 if (!liff.isLoggedIn()) {

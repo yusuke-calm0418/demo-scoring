@@ -20,7 +20,7 @@ class ScoreSetting(models.Model):
     trigger = models.CharField(max_length=100)
     score = models.IntegerField()
     memo = models.TextField(blank=True, null=True)
-    tag = models.ForeignKey('line_management.Tag', on_delete=models.SET_NULL, null=True, blank=True)
+    tag = models.ForeignKey('line_management.Tag', on_delete=models.SET_NULL, null=True, blank=True, related_name='score_settings')
     tracking_link = models.URLField(blank=True, null=True)
 
     def __str__(self):

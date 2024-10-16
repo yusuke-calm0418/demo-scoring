@@ -6,14 +6,15 @@ from django.conf import settings
 # LINE IDを登録するためのモデル
 class LineSettings(models.Model):
     user = models.OneToOneField(
-        settings.AUTH_USER_MODEL, 
+        CustomUser, 
         on_delete=models.CASCADE, 
         related_name='line_settings'
     )
     line_channel_id = models.CharField(max_length=255)
     line_channel_secret = models.CharField(max_length=255)
     line_access_token = models.CharField(max_length=255)
-
+    liff_id = models.CharField(max_length=255, blank=True, null=True)
+    
     def __str__(self):
         return f"LINE Settings for {self.user.email}"
         

@@ -8,6 +8,7 @@ urlpatterns = [
     path('user_info/', views.user_info_view, name='user_info'),
     path('settings/', views.get_line_settings, name='line_settings'),
     path('callback/', views.callback, name='callback'),
+    path('callback/<int:user_id>/', views.callback, name='line_callback'),
     path('line_friends/', views.line_friends_list, name='line_friends_list'),
     path('api/user/<int:user_id>/', views.UserDetailAPIView.as_view(), name='user_detail_api'),
     path('api/user/<int:user_id>/update_memo/', views.UpdateMemoView.as_view(), name='update_memo'),

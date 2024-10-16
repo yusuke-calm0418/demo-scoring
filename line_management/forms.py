@@ -5,7 +5,7 @@ from .models import LineSettings, Tag, LineFriend
 class LineSettingsForm(forms.ModelForm):
     class Meta:
         model = LineSettings
-        fields = ['line_channel_id', 'line_channel_secret', 'line_access_token']
+        fields = ['line_channel_id', 'line_channel_secret', 'line_access_token', 'liff_id']
         widgets = {
             'line_channel_id': forms.TextInput(attrs={
                 'class': 'w-full px-3 py-2 border rounded-md focus:outline-none focus:ring focus:border-blue-300',

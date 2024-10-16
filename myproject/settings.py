@@ -29,7 +29,7 @@ DEBUG = True
 ALLOWED_HOSTS = [
     'localhost',
     '127.0.0.1',
-    '03f9-118-238-234-205.ngrok-free.app',  # NgrokのURLをここに追加
+    '1494-103-5-140-149.ngrok-free.app',  # NgrokのURLをここに追加
 ]
 
 # Application definition
@@ -171,6 +171,7 @@ AUTHENTICATION_BACKENDS = [
 LINE_CHANNEL_ACCESS_TOKEN = 'YOUR_LINE_CHANNEL_ACCESS_TOKEN'
 LINE_CHANNEL_SECRET = 'YOUR_LINE_CHANNEL_SECRET'
 
-CSRF_TRUSTED_ORIGINS = ["https://03f9-118-238-234-205.ngrok-free.app", "http://localhost", "http://127.0.0.1"]
+CSRF_TRUSTED_ORIGINS = ["https://1494-103-5-140-149.ngrok-free.app", "http://localhost", "http://127.0.0.1"]
 
-
+SESSION_COOKIE_AGE = 3600  # セッションの有効期限（秒）
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False  # ブラウザが閉じてもセッションを維持
