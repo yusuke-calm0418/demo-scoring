@@ -1,6 +1,6 @@
 # line_management/admin.py
 from django.contrib import admin
-from .models import LineFriend, LineSettings, UserAction, Tag
+from .models import LineFriend, LineSettings, UserAction, Tag, Referral
 
 class LineSettingsAdmin(admin.ModelAdmin):
     list_display = ['line_channel_id', 'line_channel_secret', 'line_access_token']
@@ -36,3 +36,12 @@ class TagAdmin(admin.ModelAdmin):
     list_display = ('name', 'color')
     search_fields = ('name', 'color')
     list_filter = ('created_at', 'updated_at')
+
+# Referralモデルを管理サイトに追加
+@admin.register(Referral)
+class ReferralAdmin(admin.ModelAdmin):
+    list_display = ('id', 'user', 'name', 'url', 'created_at')  # 表示するカラム
+    search_fields = ('name',)  # 検索フィールド
+
+    # リスト表示の順序を指定
+    ordering = ('-created_at',)

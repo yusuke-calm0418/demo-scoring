@@ -1,3 +1,4 @@
+<!-- score_management/dashboard.html -->
 {% extends "base_dashboard.html" %}
 {% load static %}
 
@@ -145,6 +146,8 @@
                 <th class="py-2 px-2 border-b-2 text-sm">スコア</th>
                 <th class="py-2 px-2 border-b-2 text-sm">ユーザー</th>
                 <th class="py-2 px-2 border-b-2 text-sm">最終アクション</th>
+                <th class="py-2 px-2 border-b-2 text-sm">アクションタグ</th>
+                <th class="py-2 px-2 border-b-2 text-sm">ショートメモ</th>
             </tr>
         </thead>
         <tbody>
@@ -152,12 +155,25 @@
             <tr>
                 <td class="py-2 px-2 border-b text-center">{{ forloop.counter }}</td>
                 <td class="py-2 px-2 border-b text-center">{{ score.total_score }}</td>
-                <td class="py-2 px-2 border-b text-center">{{ score.display_name }}</td>
+                <td class="py-2 px-2 border-b text-center">
+                    <img src="{{ score.picture_url }}" alt="LINE Icon" class="inline-block h-8 w-8 rounded-full mr-2">
+                    {{ score.display_name }}
+                </td>
                 <td class="py-2 px-2 border-b text-center">{{ score.get_final_action_date|date:"Y-m-d" }}</td>
+                <td class="py-2 px-2 border-b text-center">
+                    {% for tag in score.tags.all %}
+                    <span class="inline-block py-1 px-3 rounded-full text-sm text-white" style="background-color: {{ tag.color }}; margin-top: 12px;">
+                        {{ tag.name }}
+                    </span>
+                    {% empty %}
+                    <span class="text-gray-500">タグなし</span>
+                    {% endfor %}
+                </td>
+                <td class="py-2 px-2 border-b text-center">{{ score.short_memo }}</td>
             </tr>
             {% empty %}
             <tr>
-                <td colspan="4" class="py-2 px-6 text-center text-gray-500">スコアランクがまだありません。</td>
+                <td colspan="6" class="py-2 px-6 text-center text-gray-500">スコアランクがまだありません。</td>
             </tr>
             {% endfor %}
         </tbody>
@@ -166,11 +182,22 @@
 
 <script>
     function showTab(tab) {
-        document.querySelectorAll('.tab-content').forEach(content => {
-            content.classList.remove('active');
-        });
-        document.getElementById(tab).classList.add('active');
-    }
+    // タブのコンテンツをすべて非表示にする
+    document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.remove('active');
+    });
+    
+    // 表示したいタブのコンテンツだけを表示する
+    document.getElementById(tab).classList.add('active');
+
+    // すべてのタブボタンから 'active' クラスを削除する
+    document.querySelectorAll('.tab-btn').forEach(button => {
+        button.classList.remove('active');
+    });
+    
+    // クリックされたタブボタンに 'active' クラスを追加する
+    document.getElementById(tab + 'Tab').classList.add('active');
+}
 </script>
 {% endblock %}
 

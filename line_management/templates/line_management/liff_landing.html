@@ -1,0 +1,56 @@
+<!-- line_management/liff_landing.html -->
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LIFF App - 流入経路保存</title>
+    <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+</head>
+
+<body>
+    <div class="coupon-display">
+        <a id="and_intent_btn" href="intent://liff.line.me/{{ liff_id }}/landing?route={{ route }}#Intent;scheme=https;action=android.intent.action.VIEW;category=android.intent.category.BROWSABLE;package=jp.naver.line.android;end" class="regular-btn mb">アプリで開く(Android)</a>
+        <a id="ios_intent_btn" href="line://app/{{ liff_id }}?route={{ route }}" class="regular-btn mb" style="display: block;">アプリで開く(iOS)</a>
+        <span id="login_btn" class="regular-btn-blue">ブラウザでログインする</span>
+    </div>
+
+    <script>
+        liff.init({
+            liffId: "{{ liff_id }}",
+        }).then(() => {
+            if (!liff.isLoggedIn()) {
+                liff.login();
+            } else {
+                const accessToken = liff.getAccessToken();
+                const route = "{{ route }}";
+
+                // アクセストークンとルート情報をサーバーに送信
+                fetch("{% url 'line_management:save_referral_info' user_id=request.user.id %}?route=" + route, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-CSRFToken': '{{ csrf_token }}',
+                    },
+                    body: `access_token=${accessToken}`
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        console.log('Success:', data);
+                        window.location.href = '{{ line_url }}';  // 成功時にLINE友達追加ページにリダイレクト
+                    } else {
+                        console.error('Error:', data);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+            }
+        }).catch((err) => {
+            console.error('LIFF initialization failed ', err);
+        });
+    </script>
+</body>
+</html>

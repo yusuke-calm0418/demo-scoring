@@ -1,3 +1,4 @@
+<!-- line_management/templates/line_management/liff_template.html -->
 <!DOCTYPE html>
 <html lang="ja">
 
@@ -11,11 +12,12 @@
 <body>
     <h1>LIFF App Example</h1>
     <p>お待ちください...</p>
+    <p>Score ID: {{ link_score.pk }}</p>
 
     <script type="text/javascript">
         document.addEventListener('DOMContentLoaded', function () {
-            const liffId = "{{ liff_id }}";  // テンプレートから動的に LIFF ID を取得
-
+            const liffId = "{{ liff_id }}";  
+            
             liff.init({ liffId })
                 .then(() => {
                     if (!liff.isLoggedIn()) {
@@ -54,7 +56,9 @@
                     console.error('LIFFの初期化に失敗しました:', err);
                 });
         });
+
     </script>
+
 </body>
 
 </html>

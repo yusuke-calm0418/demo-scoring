@@ -7,7 +7,7 @@ from django.utils.crypto import get_random_string
 import random, string
 from urllib.parse import urlencode
 from django.apps import apps
-
+from django.core.exceptions import ValidationError
 
 # スコア設定テーブル
 class ScoreSetting(models.Model):
@@ -27,7 +27,7 @@ class ScoreSetting(models.Model):
         return f"{self.get_action_type_display()} - {self.trigger} - {self.score}"
 
     def generate_tracking_link(self):
-        base_url = "https://03f9-118-238-234-205.ngrok-free.app/line/liff/"
+        base_url = "https://87b1-111-102-194-193.ngrok-free.app/line/liff/"
         return f"{base_url}{self.pk}"
 
     def save(self, *args, **kwargs):
@@ -40,13 +40,3 @@ class ScoreSetting(models.Model):
 
     # 再度保存してトラッキングリンクを保存
         super().save(*args, **kwargs)
-
-# リンクテーブル
-class Link(models.Model):
-    url = models.URLField()
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return self.url

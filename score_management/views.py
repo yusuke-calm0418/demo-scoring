@@ -1,7 +1,7 @@
 # score_management/views.py
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from .models import ScoreSetting, Tag, Link
+from .models import ScoreSetting, Tag
 from .forms import ScoreSettingForm
 from django.utils.decorators import method_decorator
 from django.views import View
@@ -18,12 +18,49 @@ logger = logging.getLogger(__name__)
 
 @login_required
 def dashboard_view(request):
-    from line_management.models import UserAction, LineFriend 
-    # ログインユーザーのLINE友達を取得
-    user_line_friends = LineFriend.objects.filter(user=request.user)
-    logger.info(f"User Line Friends: {user_line_friends}")
+    from line_management.models import UserAction, LineFriend, LineSettings
 
-    # POSTリクエスト時のフォーム処理
+    # 現在のユーザーに関連する LineSettings を取得
+    line_settings = LineSettings.objects.filter(user=request.user).first()
+    if not line_settings:
+        return render(request, 'score_management/dashboard.html', {
+            'error_message': 'LINE設定が見つかりません。',
+        })
+
+    # LineSettings に関連する友達を取得
+    user_line_friends = LineFriend.objects.filter(line_settings=line_settings)
+
+    # 最近のアクション（最新5件）
+    recent_actions = (
+        UserAction.objects.filter(line_friend__in=user_line_friends)
+        .select_related('line_friend')
+        .order_by('-date')[:5]
+    )
+
+    # 発話アクションの集計
+    speech_triggers = (
+        UserAction.objects.filter(line_friend__in=user_line_friends, action_type='speech')
+        .values('memo')
+        .annotate(total=Count('memo'))
+        .order_by('-total')[:5]
+    )
+
+    # リンクアクションの集計
+    link_triggers = (
+        UserAction.objects.filter(line_friend__in=user_line_friends, action_type='link')
+        .values('memo')
+        .annotate(total=Count('memo'))
+        .order_by('-total')[:5]
+    )
+
+    # スコア順でLINE友達を表示
+    top_line_friends = (
+        user_line_friends.annotate(
+            total_score=Coalesce(Sum('actions__score'), Value(0))
+        ).order_by('-total_score')[:10]
+    )
+
+    # フォーム処理
     if request.method == 'POST':
         form = ScoreSettingForm(request.POST)
         if form.is_valid():
@@ -34,39 +71,7 @@ def dashboard_view(request):
     else:
         form = ScoreSettingForm()
 
-    # 現在のユーザーの最新アクション（最大5件）
-    recent_actions = (
-    UserAction.objects.filter(
-        line_friend__user=request.user
-    ).select_related('line_friend').order_by('-date')[:5]
-)
-
-    logger.info(f"Recent Actions: {recent_actions}")
-
-    # 発話アクションのトリガーごとの集計（最大5件）
-    speech_triggers = (
-        UserAction.objects.filter(line_friend__in=user_line_friends, action_type='speech')
-        .values('memo')
-        .annotate(total=Count('memo'))
-        .order_by('-total')[:5]
-    )
-
-    # リンクアクションのトリガーごとの集計（最大5件）
-    link_triggers = (
-        UserAction.objects.filter(line_friend__in=user_line_friends, action_type='link')
-        .values('memo')
-        .annotate(total=Count('memo'))
-        .order_by('-total')[:5]
-    )
-
-    # スコア順にLINE友達を取得（最大10件）
-    top_line_friends = (
-        user_line_friends.annotate(
-            total_score=Coalesce(Sum('actions__score'), Value(0))
-        ).order_by('-total_score')[:10]
-    )
-
-    # テンプレートにデータを渡す
+    # テンプレートにデータを渡してレンダリング
     return render(request, 'score_management/dashboard.html', {
         'form': form,
         'recent_actions': recent_actions,
@@ -75,63 +80,28 @@ def dashboard_view(request):
         'top_line_friends': top_line_friends,
     })
 
-@login_required
-def score_settings_view(request):
-    company = request.user.company
-    scores = ScoreSetting.objects.filter(company=company)
-    return render(request, 'score_management/score_settings.html', {'scores': scores})
-
 def generate_tracking_link(original_url, line_user_id):
     params = {'line_user_id': line_user_id}
     tracking_url = f"{original_url}?{urlencode(params)}"
     return tracking_url
-
-class ScoreSettingsView(View):
-    @method_decorator(login_required)
-    def get(self, request):
-        from .forms import ScoreSettingForm  # 関数内インポート
-        from .models import ScoreSetting  # 関数内インポート
         
-        form = ScoreSettingForm()
-        # 現在のユーザーに関連するスコア設定のみ取得
-        scores = ScoreSetting.objects.filter(user=request.user)
-        tags = Tag.objects.filter(score_settings__user=request.user).distinct()
+@login_required
+def score_settings_view(request):
+    scores = ScoreSetting.objects.filter(user=request.user)
 
-        return render(request, 'score_management/score_settings.html', {
-            'form': form, 
-            'scores': scores, 
-            'tags': tags
-        })
-
-    @method_decorator(login_required)
-    def post(self, request):
-        form = ScoreSettingForm(request.POST)
+    if request.method == 'POST':
+        form = ScoreSettingForm(request.POST, user=request.user)  # フォームにユーザーを渡す
         if form.is_valid():
-            tag_name = request.POST.get('tag_name')
-            tag_color = request.POST.get('tag_color')
+            form.save()  # フォームが保存される際に、ユーザーがセットされる
+            return redirect('score_management:score_settings')
+    else:
+        form = ScoreSettingForm(user=request.user)  # GETリクエストの場合も同様にユーザーを渡す
 
-            # 現在のユーザーに限定してタグを検索・作成
-            tag, created = Tag.objects.get_or_create(name=tag_name)
+    return render(request, 'score_management/score_settings.html', {
+        'form': form,
+        'scores': scores,
+    })
 
-            if not created:
-                form.add_error(None, f'タグ "{tag_name}" は既に存在します。')
-            else:
-                tag.color = tag_color
-                tag.save()
-                
-                score_setting = form.save(commit=False)
-                score_setting.user = request.user
-                score_setting.tag = tag
-                score_setting.save()
-
-                return redirect('score_management:score_settings')
-
-        # フォームが無効な場合、再度現在のユーザーのスコア設定を取得
-        scores = ScoreSetting.objects.filter(user=request.user)
-        return render(request, 'score_management/score_settings.html', {
-            'form': form, 
-            'scores': scores
-        })
 
 # 設定ページを提供
 @login_required
@@ -141,7 +111,18 @@ def settings_view(request):
 # ユーザー情報ページを提供
 @login_required
 def user_info_view(request):
-    return render(request, 'line_management/user_info.html')
+    """ログインユーザーに関連するLINE友達のアクション履歴を表示"""
+
+    # ログインユーザーに関連するLINE友達を取得
+    line_friends = LineFriend.objects.filter(line_settings__user=request.user)
+
+    # 取得した友達に基づくアクション履歴を取得
+    actions = UserAction.objects.filter(line_friend__in=line_friends).select_related('line_friend', 'score_setting')
+
+    # テンプレートにデータを渡してレンダリング
+    return render(request, 'line_management/user_info.html', {
+        'actions': actions,
+    })
 
 # リンククリック時のスコア加算処理
 def track_link(request):
@@ -180,39 +161,62 @@ def track_link(request):
 
     return redirect(original_url)
 
-
-# スコア設定編集
+#   スコア編集機能
 @login_required
 def edit_score_setting(request, score_id):
     score_setting = get_object_or_404(ScoreSetting, id=score_id, user=request.user)
-    
+
     if request.method == 'POST':
         form = ScoreSettingForm(request.POST, instance=score_setting)
         if form.is_valid():
             tag_name = request.POST.get('tag_name')
             tag_color = request.POST.get('tag_color', '#ffffff' if score_setting.tag is None else score_setting.tag.color)
-            tag, created = Tag.objects.get_or_create(name=tag_name)
 
-            if not created:
-                tag.color = tag_color
-                tag.save()  
+            # タグが変更されていない場合は既存のタグを使い、カラーのみ更新
+            if score_setting.tag and score_setting.tag.name == tag_name:
+                # タグ名が変更されていない場合は、カラーのみ更新
+                tag = score_setting.tag
+                if tag.color != tag_color:
+                    tag.color = tag_color
+                    tag.save()
+            else:
+                # タグ名が変更された場合、既存のタグを確認
+                existing_tag = Tag.objects.filter(name=tag_name, user=request.user).first()
+                if existing_tag:
+                    # 既存タグがある場合はそれを使用し、カラーを更新
+                    if existing_tag.color != tag_color:
+                        existing_tag.color = tag_color
+                        existing_tag.save()
+                    tag = existing_tag
+                else:
+                    tag = Tag.objects.create(name=tag_name, user=request.user, color=tag_color)
 
-            score_setting = form.save(commit=False)
-            score_setting.tag = tag
+            # 古いタグが他に使われていない場合は削除
+            if score_setting.tag and score_setting.tag != tag:
+                old_tag = score_setting.tag
+                score_setting.tag = tag
+                score_setting.save()
+
+                # もし他のスコア設定で古いタグが使われていない場合は削除
+                if not ScoreSetting.objects.filter(tag=old_tag).exists():
+                    old_tag.delete()
+
+            # スコア設定を保存
             score_setting.save()
             return redirect('score_management:score_settings')
         else:
             return JsonResponse({'status': 'error', 'errors': form.errors})
 
-    else:
-        return JsonResponse({
-            'action_type': score_setting.action_type,
-            'trigger': score_setting.trigger,
-            'score': score_setting.score,
-            'memo': score_setting.memo,
-            'tag_name': score_setting.tag.name if score_setting.tag else '',
-            'tag_color': score_setting.tag.color if score_setting.tag else '#ffffff'
-        })
+    return JsonResponse({
+        'action_type': score_setting.action_type,
+        'trigger': score_setting.trigger,
+        'score': score_setting.score,
+        'memo': score_setting.memo,
+        'tag_name': score_setting.tag.name if score_setting.tag else '',
+        'tag_color': score_setting.tag.color if score_setting.tag else '#ffffff'
+    })
+
+
 
 # スコア削除機能
 @login_required

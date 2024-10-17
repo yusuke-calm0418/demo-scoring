@@ -1,0 +1,56 @@
+<!-- line_management/templates/line_management/liff_template.html -->
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LIFF App</title>
+    <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+</head>
+
+<body>
+    <h1>LIFF App Example</h1>
+    <p>お待ちください...</p>
+    <p>Score ID: {{ link_score.pk }}</p>
+
+<script>
+    liff.init({
+        liffId: "{{ liff_id }}",
+    }).then(() => {
+        if (!liff.isLoggedIn()) {
+            liff.login();
+        } else {
+            const accessToken = liff.getAccessToken();
+            const route = "{{ route }}";
+
+            // 流入経路の情報をサーバーに送信
+            fetch("{% url 'line_management:save_referral_info' user_id=request.user.id %}?route=" + route, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `access_token=${accessToken}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    console.log('Success:', data);
+                    window.location.href = '{{ line_url }}';  // 成功時にLINE友達追加ページへリダイレクト
+                } else {
+                    console.error('Error:', data);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        }
+    }).catch((err) => {
+        console.error('LIFF initialization failed ', err);
+    });
+</script>
+
+
+</body>
+
+</html>

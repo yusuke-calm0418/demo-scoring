@@ -24,8 +24,6 @@ class LineSettingsForm(forms.ModelForm):
                 'placeholder': 'LIFF IDを入力してください'
             }),
         }
-
-        
         
 class Tag():
     class Meta:
